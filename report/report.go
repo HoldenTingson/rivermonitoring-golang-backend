@@ -3,34 +3,34 @@ package report
 import "context"
 
 type Report struct {
-	Id        int    `db:"id" json:"id"`
-	Title     string `db:"title" json:"title"`
-	Content   string `db:"content" json:"content"`
-	UserId    int    `db:"user_id" json:"user_id"`
-	Name      string `db:"name" json:"name"`
-	Email     string `db:"email" json:"email"`
-	Phone     string `db:"phone" json:"phone"`
-	CreatedAt string `db:"created_at" json:"created_at"`
+	Id         int    `db:"id" json:"id"`
+	Content    string `db:"content" json:"content"`
+	Attachment string `db:"attachment" json:"attachment"`
+	UserId     int    `db:"user_id" json:"user_id"`
+	Name       string `db:"name" json:"name"`
+	Email      string `db:"email" json:"email"`
+	Phone      string `db:"phone" json:"phone"`
+	CreatedAt  string `db:"created_at" json:"created_at"`
 }
 
 type ReportResponse struct {
-	Id        int    `db:"id" json:"id"`
-	Title     string `db:"title" json:"title"`
-	Content   string `db:"content" json:"content"`
-	UserId    int    `db:"user_id" json:"user_id"`
-	Name      string `db:"name" json:"name"`
-	Email     string `db:"email" json:"email"`
-	Phone     string `db:"phone" json:"phone"`
-	CreatedAt string `db:"created_at" json:"created_at"`
+	Id         int    `db:"id" json:"id"`
+	Content    string `db:"content" json:"content"`
+	Attachment string `db:"attachment" json:"attachment"`
+	UserId     int    `db:"user_id" json:"user_id"`
+	Name       string `db:"name" json:"name"`
+	Email      string `db:"email" json:"email"`
+	Phone      string `db:"phone" json:"phone"`
+	CreatedAt  string `db:"created_at" json:"created_at"`
 }
 
 type CreateReportRequest struct {
-	Title   string `db:"title" json:"title"`
-	Content string `db:"content" json:"content"`
-	UserId  int    `db:"user_id" json:"user_id"`
-	Name    string `db:"name" json:"name"`
-	Email   string `db:"email" json:"email"`
-	Phone   string `db:"phone" json:"phone"`
+	Content    string `db:"content" json:"content"`
+	Attachment string `db:"attachment" json:"attachment"`
+	UserId     int    `db:"user_id" json:"user_id"`
+	Name       string `db:"name" json:"name"`
+	Email      string `db:"email" json:"email"`
+	Phone      string `db:"phone" json:"phone"`
 }
 
 type Repository interface {

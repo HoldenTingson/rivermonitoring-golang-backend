@@ -5,9 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"math/rand"
-	"strconv"
-	"time"
 )
 
 type DBTX interface {
@@ -25,66 +22,22 @@ func NewRepository(db DBTX) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) UpdateRiver(ctx context.Context, riverChan chan *UpdateRiver, id string) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			number := id[1:]
-			numberId, _ := strconv.Atoi(number)
-			seed := time.Now().UnixNano() + int64(numberId)
-			rand.Seed(seed)
-			status := ""
-			min := 0.5
-			max := 5.0
-			height := rand.Float64()*(max-min) + min
+func (r *repository) UpdateRiver(ctx context.Context, update *UpdateRiver) error {
 
-			height = float64(int(height*100)) / 100
-			if height < 1.5 {
-				status = "Aman"
-			} else if height < 3 {
-				status = "Siaga"
-			} else {
-				status = "Bahaya"
-			}
-			query := "update river set height = ?, status = ? where id = ?"
-			result, err := r.db.ExecContext(ctx, query, height, status, id)
-			if err != nil {
-				return err
-			}
-
-			rowsAffected, err := result.RowsAffected()
-			if err != nil {
-				return err
-			}
-
-			if rowsAffected == 0 {
-				return fmt.Errorf("no rows affected")
-			}
-
-			insertQuery := "INSERT INTO history (height, status, river_id) VALUES (?, ?, ?)"
-			_, err = r.db.ExecContext(ctx, insertQuery, height, status, id)
-			if err != nil {
-				panic(err)
-			}
-
-			updateRiver := &UpdateRiver{
-				Id:     id,
-				Height: height,
-				Status: status,
-			}
-			riverChan <- updateRiver
-			time.Sleep(5 * time.Second)
-		case r := <-riverChan:
-			msg := UpdateRiver{
-				Id:     r.Id,
-				Height: r.Height,
-				Status: r.Status,
-			}
-			broadcast <- msg
-		}
+	query := "UPDATE river SET height = ?, status = ? WHERE id = ?"
+	_, err := r.db.ExecContext(ctx, query, update.Height, update.Status, update.Id)
+	if err != nil {
+		return err
 	}
+
+	insertQuery := "INSERT INTO history (height, status, river_id) VALUES (?, ?, ?)"
+	_, err = r.db.ExecContext(ctx, insertQuery, update.Height, update.Status, update.Id)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("River updated:", update)
+	return nil
 }
 
 func (r *repository) GetRiver(ctx context.Context) (*[]River, error) {

@@ -4,8 +4,6 @@ import (
 	"BanjirEWS/admin"
 	"BanjirEWS/carrousel"
 	"BanjirEWS/database"
-	"BanjirEWS/faq"
-	"BanjirEWS/feedback"
 	"BanjirEWS/gallery"
 	"BanjirEWS/history"
 	"BanjirEWS/news"
@@ -38,19 +36,9 @@ func main() {
 				report.NewRepository(db.GetDB()),
 			),
 		),
-		feedback.NewHandler(
-			feedback.NewService(
-				feedback.NewRepository(db.GetDB()),
-			),
-		),
 		gallery.NewHandler(
 			gallery.NewService(
 				gallery.NewRepository(db.GetDB()),
-			),
-		),
-		faq.NewHandler(
-			faq.NewService(
-				faq.NewRepository(db.GetDB()),
 			),
 		),
 		history.NewHandler(

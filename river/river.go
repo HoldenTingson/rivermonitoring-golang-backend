@@ -51,7 +51,7 @@ type Repository interface {
 	GetRiver(ctx context.Context) (*[]River, error)
 	GetRiverId(ctx context.Context) ([]string, error)
 	GetRiverById(ctx context.Context, id string) (*River, error)
-	UpdateRiver(ctx context.Context, riverChan chan *UpdateRiver, id string) error
+	UpdateRiver(ctx context.Context, update *UpdateRiver) error
 	FindRiver(ctx context.Context, location string) (*River, error)
 	FilterRiver(ctx context.Context, sortBy string) (*[]River, error)
 	GetAllRiverCount(ctx context.Context) (int, error)
@@ -64,9 +64,11 @@ type Service interface {
 	ChangeRiverDetail(ctx context.Context, req *UpdateRiverRequest, id string) error
 	ViewRiver(ctx context.Context) (*[]RiverResponse, error)
 	ViewRiverById(ctx context.Context, id string) (*RiverResponse, error)
-	UpdateRiver(ctx context.Context) error
+	UpdateRiver(ctx context.Context, id string, dataChan chan *UpdateRiver) error
 	SearchRiver(ctx context.Context, location string) (*RiverResponse, error)
 	SortRiver(ctx context.Context, sortBy string) (*[]RiverResponse, error)
 	ViewAllRiverCount(ctx context.Context) (int, error)
 	ViewRiverByStatus(ctx context.Context, status string) (*[]RiverResponse, error)
 }
+
+var sensorChan = make(map[string]chan *UpdateRiver)

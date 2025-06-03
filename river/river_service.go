@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 )
 
 type service struct {
@@ -25,85 +24,50 @@ var (
 	clientsMutex sync.Mutex
 )
 
-func (s *service) UpdateRiver(ctx context.Context) error {
-	riverChans := make(map[string]chan *UpdateRiver)
-
+func (s *service) UpdateRiver(ctx context.Context, id string, dataChan chan *UpdateRiver) error {
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			default:
-				riverIDs, err := s.Repository.GetRiverId(ctx)
-				if err != nil {
-					log.Printf("failed to get river IDs: %v", err)
-					// Continue with the loop even if there's an error
-					continue
+			case update := <-dataChan:
+
+				if update.Height < 1.5 {
+					update.Status = "Aman"
+				} else if update.Height < 3 {
+					update.Status = "Siaga"
+				} else {
+					update.Status = "Bahaya"
 				}
 
-				// Create a new map to store the updated river channels
-				newRiverChans := make(map[string]chan *UpdateRiver)
-
-				for _, id := range riverIDs {
-					riverMutex.Lock()
-					if _, exists := riverChans[id]; !exists {
-						riverChans[id] = make(chan *UpdateRiver)
-						go s.Repository.UpdateRiver(ctx, riverChans[id], id)
-					}
-					riverMutex.Unlock()
-
-					// Copy existing river channels to the new map
-					newRiverChans[id] = riverChans[id]
-				}
-
-				// Acquire the mutex before updating riverChans
 				riverMutex.Lock()
-
-				// Update riverChans with the new map
-				riverChans = newRiverChans
-
-				// Release the mutex after updating riverChans
+				err := s.Repository.UpdateRiver(ctx, update)
+				if err != nil {
+					log.Printf("Failed to update river: %v", err)
+				}
 				riverMutex.Unlock()
 
-				time.Sleep(5 * time.Second)
-			}
-		}
-	}()
-
-	for {
-		// Acquire the mutex before accessing riverChans
-		riverMutex.Lock()
-
-		for _, riverChan := range riverChans {
-			select {
-			case r := <-riverChan:
 				msg := UpdateRiver{
-					Id:     r.Id,
-					Height: r.Height,
-					Status: r.Status,
+					Id:     update.Id,
+					Height: update.Height,
+					Status: update.Status,
 				}
+				fmt.Println("From service:", msg)
 
-				// Acquire the mutex before updating the clients
 				clientsMutex.Lock()
 				for client := range clients {
 					err := client.WriteJSON(msg)
 					if err != nil {
 						delete(clients, client)
-						log.Printf("failed to write JSON to client: %v", err)
+						log.Printf("Failed to write JSON to client: %v", err)
 					}
 				}
-				// Release the mutex after updating the clients
 				clientsMutex.Unlock()
-			case <-ctx.Done():
-				// Release the mutex before returning
-				riverMutex.Unlock()
-				return nil
 			}
 		}
+	}()
 
-		// Release the mutex before waiting for the next iteration
-		riverMutex.Unlock()
-	}
+	return nil
 }
 
 func (s *service) AddRiver(ctx context.Context, req *CreateRiverRequest) error {

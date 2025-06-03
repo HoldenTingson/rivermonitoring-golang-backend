@@ -18,14 +18,14 @@ func NewHandler(s Service) *Handler {
 	}
 }
 
-func (h *Handler) CreateUser(c *gin.Context) {
+func (h *Handler) RegisterUser(c *gin.Context) {
 	var u CreateUserReq
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	res, err := h.Service.CreateUser(c.Request.Context(), &u)
+	res, err := h.Service.RegisterUser(c.Request.Context(), &u)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -83,7 +83,6 @@ func (h *Handler) GetUser(c *gin.Context) {
 		Email:    u.Email,
 		Password: u.Password,
 		Phone:    u.Phone,
-		Language: u.Language,
 		Profile:  u.Profile,
 	}
 
@@ -117,17 +116,12 @@ func (h *Handler) Logout(c *gin.Context) {
 }
 
 func (h *Handler) ChangePassword(c *gin.Context) {
-	// Parse the request body
 	var req ChangePasswordReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Get the user ID from the authenticated user (e.g., from the token)
-	// You can extract the user ID from the token using the same method you used during login
-
-	// Call the service to change the password
 	err := h.Service.ChangePassword(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -135,4 +129,86 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
+}
+
+func (h *Handler) SendEmail(c *gin.Context) {
+	var req SendEmailReq
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.Service.SendEmail(c.Request.Context(), req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Email sent successfully"})
+
+}
+
+func (h *Handler) CreatePassword(c *gin.Context) {
+	var req CreatePasswordReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.Service.CreatePassword(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password created successfully"})
+}
+
+func (h *Handler) AddUser(c *gin.Context) {
+	var req CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	err := h.Service.AddUser(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, "Successfully Add User")
+}
+
+func (h *Handler) ViewUser(c *gin.Context) {
+	res, err := h.Service.ViewUser(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+func (h *Handler) ViewUserById(c *gin.Context) {
+	stringId := c.Param("id")
+	id, _ := strconv.Atoi(stringId)
+	res, err := h.Service.ViewUserById(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) RemoveUser(c *gin.Context) {
+	stringId := c.Param("id")
+	id, _ := strconv.Atoi(stringId)
+
+	err := h.Service.RemoveUser(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, "Successfully Remove User")
 }

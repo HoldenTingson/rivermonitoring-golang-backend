@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"BanjirEWS/util"
 	"context"
 	"database/sql"
 	"errors"
@@ -33,16 +34,65 @@ type MyJWTClaims struct {
 	jwt.RegisteredClaims
 }
 
+func (s *service) CreateAdmin(c context.Context, req *CreateAdminReq) (*CreateAdminRes, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	hashedPassword, err := util.HashPassword(req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	a := &Admin{
+		Username: req.Username,
+		Password: hashedPassword,
+	}
+
+	r, err := s.Repository.CreateAdmin(ctx, a)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &CreateAdminRes{
+		Id:       r.Id,
+		Username: r.Username,
+	}
+	return res, nil
+}
+
 func (s *service) Login(c context.Context, req *LoginAdminReq) (*LoginAdminRes, error) {
 
-	a, err := s.Repository.GetAdminByUsername(c, req.Username, req.Password)
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	a, err := s.Repository.GetAdminByUsername(ctx, req.Username)
+	if err != nil {
+		return &LoginAdminRes{}, err
+	}
+
+	err = util.CheckPassword(req.Password, a.Password)
+	if err != nil {
+		return &LoginAdminRes{}, err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
+		ID:       strconv.Itoa(int(a.Id)),
+		Username: a.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    strconv.Itoa(int(a.Id)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		},
+	})
+
+	ss, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return &LoginAdminRes{}, err
 	}
 
 	return &LoginAdminRes{
-		Id:       strconv.Itoa(int(a.Id)),
-		Username: a.Username,
+		accessToken: ss,
+		Id:          strconv.Itoa(int(a.Id)),
+		Username:    a.Username,
 	}, nil
 }
 
@@ -62,96 +112,48 @@ func (s *service) GetAdmin(c context.Context, token string) (*Admin, error) {
 	}, nil
 }
 
-func (s *service) AddUser(ctx context.Context, req *CreateUserRequest) error {
-	user := User{
-		Username: req.Username,
-		Password: req.Password,
-		Email:    req.Email,
-		Phone:    req.Phone,
-		Language: req.Language,
-		Profile:  req.Profile,
-	}
-	err := s.Repository.CreateUser(ctx, &user)
+func (s *service) ViewAdmin(ctx context.Context) (*[]AdminResponse, error) {
+	var admins []AdminResponse
+	res, err := s.Repository.GetAdmins(ctx)
 	if err != nil {
-		return err
+		return &[]AdminResponse{}, err
 	}
+	for _, a := range *res {
+		admin := NewAdmin(a)
 
-	return nil
+		admins = append(admins, *admin)
+	}
+	return &admins, nil
 }
 
-func (s *service) ViewUser(ctx context.Context) (*[]UserResponse, error) {
-	var users []UserResponse
-	res, err := s.Repository.GetUser(ctx)
+func (s *service) ViewAdminById(ctx context.Context, id int) (*AdminResponse, error) {
+	res, err := s.Repository.GetAdminById(ctx, id)
 	if err != nil {
-		return &[]UserResponse{}, err
-	}
-	for _, u := range *res {
-		user := NewUser(u)
-
-		users = append(users, *user)
-	}
-	return &users, nil
-}
-
-func (s *service) ViewUserById(ctx context.Context, id int) (*UserResponse, error) {
-	res, err := s.Repository.GetUserById(ctx, id)
-	if err != nil {
-		return &UserResponse{}, err
+		return &AdminResponse{}, err
 	}
 
-	user := UserResponse{
-		Id:        res.Id,
+	res.CreatedAt, _ = util.FormatIndonesianDate(res.CreatedAt)
+
+	admin := AdminResponse{
+		Id:        int64(res.Id),
 		Username:  res.Username,
-		Password:  res.Password,
-		Email:     res.Email,
-		Phone:     res.Phone,
-		Language:  res.Language,
-		Profile:   res.Profile,
 		CreatedAt: res.CreatedAt,
-		ChangedAt: res.ChangedAt,
 	}
 
-	return &user, nil
+	return &admin, nil
 
 }
 
-func NewUser(user User) *UserResponse {
-	return &UserResponse{
-		Id:        user.Id,
-		Username:  user.Username,
-		Password:  user.Password,
-		Email:     user.Email,
-		Phone:     user.Phone,
-		Language:  user.Language,
-		Profile:   user.Profile,
-		CreatedAt: user.CreatedAt,
-		ChangedAt: user.ChangedAt,
+func NewAdmin(admin Admin) *AdminResponse {
+	return &AdminResponse{
+		Id:        int64(admin.Id),
+		Username:  admin.Username,
+		CreatedAt: admin.CreatedAt,
 	}
 }
 
-func (s *service) RemoveUser(ctx context.Context, id int) error {
-	err := s.Repository.DeleteUser(ctx, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("user with ID %d not found", id)
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (s *service) ChangeUser(ctx context.Context, req *UpdateUserRequest, id int) error {
-	user := User{
-		Username: req.Username,
-		Password: req.Password,
-		Email:    req.Email,
-		Phone:    req.Phone,
-		Language: req.Language,
-		Profile:  req.Profile,
-	}
-
-	err := s.Repository.UpdateUser(ctx, &user, id)
+func (s *service) RemoveAdmin(ctx context.Context, id int) error {
+	err := s.Repository.DeleteAdmin(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("user with ID %d not found", id)

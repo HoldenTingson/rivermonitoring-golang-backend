@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 type DBTX interface {
@@ -24,7 +25,7 @@ func NewRepository(db DBTX) Repository {
 
 func (r *repository) GetReporBytUserId(ctx context.Context, id int) (*[]Report, error) {
 	var reports []Report
-	query := "select id, title from report where user_id = ?"
+	query := "select id, content from report where user_id = ?"
 	rows, err := r.db.QueryContext(ctx, query, id)
 	if err != nil {
 		return &[]Report{}, err
@@ -32,7 +33,7 @@ func (r *repository) GetReporBytUserId(ctx context.Context, id int) (*[]Report, 
 
 	for rows.Next() {
 		var report Report
-		err := rows.Scan(&report.Id, &report.Title)
+		err := rows.Scan(&report.Id, &report.Content)
 
 		if err != nil {
 			return &[]Report{}, err
@@ -47,7 +48,7 @@ func (r *repository) GetReporBytUserId(ctx context.Context, id int) (*[]Report, 
 func (r *repository) GetReportById(ctx context.Context, id int) (*ReportResponse, error) {
 	var report ReportResponse
 	query := "SELECT * from report where id = ?"
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&report.Id, &report.Title, &report.Content, &report.Name, &report.Email, &report.Phone, &report.UserId, &report.CreatedAt)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&report.Id, &report.Content, &report.Attachment, &report.Name, &report.Email, &report.Phone, &report.UserId, &report.CreatedAt)
 	if err != nil {
 		return &ReportResponse{}, err
 	}
@@ -59,8 +60,8 @@ func (r *repository) GetReportById(ctx context.Context, id int) (*ReportResponse
 
 func (r *repository) GetReportByUserIdById(ctx context.Context, id int) (*ReportResponse, error) {
 	var report ReportResponse
-	query := "SELECT id, title, content FROM report where id = ?"
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&report.Id, &report.Title, &report.Content)
+	query := "SELECT id, content, attachment FROM report where id = ?"
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&report.Id, &report.Content, &report.Attachment)
 	if err != nil {
 		return &ReportResponse{}, err
 	}
@@ -69,8 +70,9 @@ func (r *repository) GetReportByUserIdById(ctx context.Context, id int) (*Report
 }
 
 func (r *repository) CreateReport(ctx context.Context, report *Report) error {
-	query := "insert into report (name, email, phone, title , content, user_id) values (?, ?, ?, ?, ?, ?)"
-	_, err := r.db.ExecContext(ctx, query, report.Name, report.Email, report.Phone, report.Title, report.Content, report.UserId)
+	fmt.Println(report.Phone)
+	query := "insert into report (name, email, phone, content , attachment, user_id) values (?, ?, ?, ?, ?, ?)"
+	_, err := r.db.ExecContext(ctx, query, report.Name, report.Email, report.Phone, report.Content, report.Attachment, report.UserId)
 	if err != nil {
 		return err
 	}
@@ -103,7 +105,7 @@ func (r *repository) GetReports(ctx context.Context) (*[]ReportResponse, error) 
 
 	for rows.Next() {
 		var report ReportResponse
-		err := rows.Scan(&report.Id, &report.Title, &report.Content, &report.Name, &report.Email, &report.Phone, &report.UserId, &report.CreatedAt)
+		err := rows.Scan(&report.Id, &report.Content, &report.Attachment, &report.Name, &report.Email, &report.Phone, &report.UserId, &report.CreatedAt)
 		if err != nil {
 			return &[]ReportResponse{}, err
 		}

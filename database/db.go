@@ -11,7 +11,7 @@ type Database struct {
 }
 
 func OpenDB() *Database {
-	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/banjir_ews")
+	db, err := sql.Open("mysql", "root:labXgUlEpYBrtiMpVqUaOgfUKnJOIhty@tramway.proxy.rlwy.net:13417/railway")
 	if err != nil {
 		panic(err)
 	}

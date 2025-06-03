@@ -26,10 +26,9 @@ func FormatIndonesianDate(date string) (string, error) {
 		return "", err
 	}
 
-	// Format the date using the Indonesian month names
 	indonesianDate := dateObj.Format("2 January 2006")
 	for engMonth, indMonth := range monthMap {
-		indonesianDate = strings.Replace(indonesianDate, engMonth, indMonth, -1)
+		indonesianDate = strings.Replace(indonesianDate, engMonth, indMonth, 1)
 	}
 
 	return indonesianDate, nil

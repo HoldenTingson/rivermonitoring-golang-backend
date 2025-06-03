@@ -3,8 +3,6 @@ package router
 import (
 	"BanjirEWS/admin"
 	"BanjirEWS/carrousel"
-	"BanjirEWS/faq"
-	"BanjirEWS/feedback"
 	"BanjirEWS/gallery"
 	"BanjirEWS/history"
 	"BanjirEWS/news"
@@ -18,33 +16,38 @@ import (
 
 var r *gin.Engine
 
-func Init(riverHandler *river.Handler, userHandler *user.Handler, newsHandler *news.Handler, reportHandler *report.Handler, feedbackHandler *feedback.Handler, galleryHandler *gallery.Handler, faqHandler *faq.Handler, historyHandler *history.Handler, adminHandler *admin.Handler, carroueslHandler *carrousel.Handler) {
+func Init(riverHandler *river.Handler, userHandler *user.Handler, newsHandler *news.Handler, reportHandler *report.Handler, galleryHandler *gallery.Handler, historyHandler *history.Handler, adminHandler *admin.Handler, carroueslHandler *carrousel.Handler) {
 	r = gin.Default()
 
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173", "http://localhost:3000"}
-	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "X-Requested-With", "Content-Length"}
-	config.AllowCredentials = true
+	config := cors.Config{
+		AllowOrigins: []string{"http://localhost:5173", "http://localhost:3000", "https://gobanjiradmin.netlify.app", "https://gobanjirclient.netlify.app"},
+		AllowOriginFunc: func(origin string) bool {
+			return origin == "file://" || origin == "http://localhost:5173" || origin == "http://localhost:3000" || origin == "https://gobanjirclient.netlify.app" || origin == "https://gobanjiradmin.netlify.app"
+		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "X-Requested-With", "Content-Length"},
+		AllowCredentials: true,
+	}
 	r.Use(cors.New(config))
 
 	adminRoutes := r.Group("/admin")
+	adminRoutes.POST("/signup", adminHandler.CreateAdmin)
 	adminRoutes.GET("", adminHandler.GetAdmin)
-	adminRoutes.GET("/:id", adminHandler.ViewUserById)
+	adminRoutes.GET("/admin", adminHandler.ViewAdmin)
+	adminRoutes.DELETE("/:id", adminHandler.RemoveAdmin)
+	adminRoutes.GET("/:id", adminHandler.ViewAdminById)
 	adminRoutes.POST("/login", adminHandler.Login)
 	adminRoutes.POST("/logout", adminHandler.Logout)
-	adminRoutes.GET("/user", adminHandler.ViewUser)
-	adminRoutes.POST("/user", adminHandler.AddUser)
-	adminRoutes.DELETE("/user/:id", adminHandler.RemoveUser)
-	adminRoutes.PUT("/user/:id", adminHandler.ChangeUser)
 	adminRoutes.POST("/upload", adminHandler.UploadImage)
 
 	riverRoutes := r.Group("/river")
 	riverRoutes.GET("", riverHandler.DisplayRiver)
 	riverRoutes.GET("/sort", riverHandler.SortRiversHandler)
 	riverRoutes.GET("/search", riverHandler.SearchHandler)
-	riverRoutes.GET("/update", riverHandler.UpdateRiver)
-	riverRoutes.GET("/ws", riverHandler.WebSocket)
+	riverRoutes.GET("/connect/:id", riverHandler.ConnectSensor)
+	riverRoutes.GET("/status/:id", riverHandler.GetSensorStatus)
+	riverRoutes.GET("/ws", riverHandler.SendSensorData)
+	riverRoutes.GET("/sensor/:id", riverHandler.ReceiveSensorData)
 	riverRoutes.POST("", riverHandler.AddRiver)
 	riverRoutes.GET("/status", riverHandler.DisplayRiverByStatus)
 	riverRoutes.GET("/:id", riverHandler.DisplayRiverById)
@@ -54,11 +57,17 @@ func Init(riverHandler *river.Handler, userHandler *user.Handler, newsHandler *n
 
 	userRoutes := r.Group("/user")
 	userRoutes.POST("/login", userHandler.Login)
-	userRoutes.POST("/signup", userHandler.CreateUser)
+	userRoutes.POST("/signup", userHandler.RegisterUser)
 	userRoutes.POST("/logout", userHandler.Logout)
 	userRoutes.PUT("/:id", userHandler.ChangeProfile)
 	userRoutes.GET("", userHandler.GetUser)
 	userRoutes.PUT("/password", userHandler.ChangePassword)
+	userRoutes.POST("/sendEmail", userHandler.SendEmail)
+	userRoutes.POST("/resetPassword", userHandler.CreatePassword)
+	userRoutes.GET("/userList", userHandler.ViewUser)
+	userRoutes.POST("", userHandler.AddUser)
+	userRoutes.DELETE("/:id", userHandler.RemoveUser)
+	userRoutes.GET("/:id", userHandler.ViewUserById)
 
 	carrouselRoutes := r.Group("/carrousel")
 	carrouselRoutes.GET("/:id", carroueslHandler.DisplayCarrouselById)
@@ -83,12 +92,6 @@ func Init(riverHandler *river.Handler, userHandler *user.Handler, newsHandler *n
 	reportRoutes.GET("/user/:userid/:id", reportHandler.DisplayReportByUserIdbyId)
 	reportRoutes.DELETE("/:id", reportHandler.RemoveReport)
 
-	feedbackRoutes := r.Group("/feedback")
-	feedbackRoutes.POST("", feedbackHandler.AddFeedback)
-	feedbackRoutes.GET("", feedbackHandler.DisplayFeedback)
-	feedbackRoutes.GET("/:id", feedbackHandler.DisplayFeedbackById)
-	feedbackRoutes.GET("/report/:id", feedbackHandler.DisplayFeedbackByReportId)
-
 	galleryRoutes := r.Group("/gallery")
 	galleryRoutes.GET("", galleryHandler.ViewGallery)
 	galleryRoutes.GET("/:id", galleryHandler.ViewGalleryById)
@@ -97,25 +100,16 @@ func Init(riverHandler *river.Handler, userHandler *user.Handler, newsHandler *n
 	galleryRoutes.PUT("/:id", galleryHandler.ChangeGallery)
 	galleryRoutes.DELETE("/:id", galleryHandler.RemoveGallery)
 
-	faqRoutes := r.Group("/faq")
-	faqRoutes.GET("", faqHandler.ViewFaq)
-	faqRoutes.POST("", faqHandler.AddFaq)
-	faqRoutes.PATCH("updateFaq/:id", faqHandler.ChangeFaq)
-	faqRoutes.DELETE("/:id", faqHandler.RemvoeFaq)
-	faqRoutes.GET("/search", faqHandler.SearchHandler)
-	faqRoutes.GET("/category", faqHandler.ViewCategory)
-	faqRoutes.GET("/qa", faqHandler.ViewQa)
-
 	historyRoutes := r.Group("/history")
 	historyRoutes.GET("/river/:id", historyHandler.DisplayHistoryByRiverId)
 	historyRoutes.GET("/:id", historyHandler.DisplayHistoryById)
 	historyRoutes.GET("/time/:id", historyHandler.DisplayHistoryByRiverIdByTime)
-	historyRoutes.GET("/count", historyHandler.DisplayHistoryCount)
+	historyRoutes.GET("/count/:id", historyHandler.DisplayHistoryCount)
 	historyRoutes.DELETE("", historyHandler.RemoveAllHistory)
-	historyRoutes.DELETE("time", historyHandler.RemoveAllHistoryByTime)
+	historyRoutes.DELETE("/time", historyHandler.RemoveAllHistoryByTime)
 	historyRoutes.DELETE("/river/:id", historyHandler.RemoveHistoryByRiverId)
 	historyRoutes.DELETE("/:id", historyHandler.RemoveHistoryById)
-	historyRoutes.DELETE("time/:id", historyHandler.RemoveHistoryByRiverIdByTime)
+	historyRoutes.DELETE("/time/:id", historyHandler.RemoveHistoryByRiverIdByTime)
 }
 
 func Start(addr string) error {

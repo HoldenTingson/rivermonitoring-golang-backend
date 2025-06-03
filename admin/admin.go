@@ -5,9 +5,20 @@ import (
 )
 
 type Admin struct {
-	Id       int    `db:"id" json:"id"`
+	Id        int    `db:"id" json:"id"`
+	Username  string `db:"username" json:"username"`
+	Password  string `db:"password" json:"password"`
+	CreatedAt string `db:"created_at" json:"created_at"`
+}
+
+type CreateAdminReq struct {
 	Username string `db:"username" json:"username"`
 	Password string `db:"password" json:"password"`
+}
+
+type CreateAdminRes struct {
+	Id       int    `db:"id" json:"id"`
+	Username string `db:"username" json:"username"`
 }
 
 type LoginAdminReq struct {
@@ -16,8 +27,9 @@ type LoginAdminReq struct {
 }
 
 type LoginAdminRes struct {
-	Id       string `json:"id" db:"id"`
-	Username string `json:"username" db:"username"`
+	accessToken string
+	Id          string `json:"id" db:"id"`
+	Username    string `json:"username" db:"username"`
 }
 
 type UpdateUserRequest struct {
@@ -25,29 +37,13 @@ type UpdateUserRequest struct {
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
 	Phone    string `json:"phone" db:"phone"`
-	Language string `json:"language" db:"language"`
 	Profile  string `json:"profile" db:"profile"`
 }
 
-type CreateUserRequest struct {
-	Username string `json:"username" db:"username"`
-	Password string `json:"password" db:"password"`
-	Email    string `json:"email" db:"email"`
-	Phone    string `json:"phone" db:"phone"`
-	Language string `json:"language" db:"language"`
-	Profile  string `json:"profile" db:"profile"`
-}
-
-type UserResponse struct {
+type AdminResponse struct {
 	Id        int64  `json:"id" db:"id"`
 	Username  string `json:"username" db:"username"`
-	Password  string `json:"password" db:"password"`
-	Email     string `json:"email" db:"email"`
-	Phone     string `json:"phone" db:"phone"`
-	Language  string `json:"language" db:"language"`
-	Profile   string `json:"profile" db:"profile"`
 	CreatedAt string `json:"created_at" db:"created_at"`
-	ChangedAt string `json:"changed_at" db:"changed_at"`
 }
 
 type UploadRequest struct {
@@ -62,30 +58,27 @@ type User struct {
 	Password  string `json:"password" db:"password"`
 	Email     string `json:"email" db:"email"`
 	Phone     string `json:"phone" db:"phone"`
-	Language  string `json:"language" db:"language"`
 	Profile   string `json:"profile" db:"profile"`
 	CreatedAt string `json:"created_at" db:"created_at"`
 	ChangedAt string `json:"changed_at" db:"changed_at"`
 }
 
 type Repository interface {
+	CreateAdmin(ctx context.Context, admin *Admin) (*Admin, error)
 	GetAdmin(ctx context.Context, token string) (*Admin, error)
-	GetAdminByUsername(ctx context.Context, username string, password string) (*Admin, error)
-	CreateUser(ctx context.Context, user *User) error
-	UpdateUser(ctx context.Context, user *User, id int) error
-	DeleteUser(ctx context.Context, id int) error
-	GetUser(ctx context.Context) (*[]User, error)
-	GetUserById(ctx context.Context, id int) (*User, error)
+	GetAdminByUsername(ctx context.Context, username string) (*Admin, error)
+	GetAdminById(ctx context.Context, id int) (*Admin, error)
+	DeleteAdmin(ctx context.Context, id int) error
+	GetAdmins(ctx context.Context) (*[]Admin, error)
 	GetAllUserCount(ctx context.Context) (int, error)
 }
 
 type Service interface {
+	CreateAdmin(ctx context.Context, req *CreateAdminReq) (*CreateAdminRes, error)
 	GetAdmin(c context.Context, token string) (*Admin, error)
 	Login(c context.Context, req *LoginAdminReq) (*LoginAdminRes, error)
-	AddUser(ctx context.Context, req *CreateUserRequest) error
-	ChangeUser(ctx context.Context, req *UpdateUserRequest, id int) error
-	RemoveUser(ctx context.Context, id int) error
-	ViewUser(ctx context.Context) (*[]UserResponse, error)
-	ViewUserById(ctx context.Context, id int) (*UserResponse, error)
+	RemoveAdmin(ctx context.Context, id int) error
+	ViewAdmin(ctx context.Context) (*[]AdminResponse, error)
+	ViewAdminById(ctx context.Context, id int) (*AdminResponse, error)
 	ViewAllUserCount(ctx context.Context) (int, error)
 }

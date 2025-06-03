@@ -22,6 +22,22 @@ func NewHandler(s Service) *Handler {
 	}
 }
 
+func (h *Handler) CreateAdmin(c *gin.Context) {
+	var a CreateAdminReq
+	if err := c.ShouldBindJSON(&a); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.Service.CreateAdmin(c.Request.Context(), &a)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
 func (h *Handler) Login(c *gin.Context) {
 	var admin LoginAdminReq
 	if err := c.ShouldBindJSON(&admin); err != nil {
@@ -35,6 +51,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("jwt", a.accessToken, 3600, "/", "localhost", false, true)
 	res := &LoginAdminRes{
 		Username: a.Username,
 		Id:       a.Id,
@@ -58,16 +75,16 @@ func (h *Handler) GetAdmin(c *gin.Context) {
 	}
 	claims := token.Claims.(*jwt.RegisteredClaims)
 
-	u, err := h.Service.GetAdmin(c.Request.Context(), claims.Issuer)
+	a, err := h.Service.GetAdmin(c.Request.Context(), claims.Issuer)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	res := &Admin{
-		Id:       u.Id,
-		Username: u.Username,
-		Password: u.Password,
+		Id:       a.Id,
+		Username: a.Username,
+		Password: a.Password,
 	}
 
 	c.JSON(http.StatusOK, res)
@@ -79,21 +96,6 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logout Succesful"})
 }
 
-func (h *Handler) AddUser(c *gin.Context) {
-	var req CreateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	err := h.Service.AddUser(c.Request.Context(), &req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, "Successfully Add User")
-}
-
 func (h *Handler) UploadImage(c *gin.Context) {
 	var req UploadRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -101,22 +103,16 @@ func (h *Handler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	// Remove the "data:image/<ext>;base64," prefix from the Blob field
 	base64Data := req.Blob[strings.IndexByte(req.Blob, ',')+1:]
 
-	// Decode the base64-encoded image data
 	decodedData, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode base64 data"})
 		return
 	}
 
-	// Generate a unique filename to avoid conflicts
-
-	// Create the file path
 	filePath := filepath.Join(req.Path, req.Filename)
 
-	// Save the image data to the file
 	err = ioutil.WriteFile(filePath, decodedData, 0644)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image"})
@@ -126,8 +122,8 @@ func (h *Handler) UploadImage(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Image uploaded successfully"})
 }
 
-func (h *Handler) ViewUser(c *gin.Context) {
-	res, err := h.Service.ViewUser(c.Request.Context())
+func (h *Handler) ViewAdmin(c *gin.Context) {
+	res, err := h.Service.ViewAdmin(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -136,10 +132,10 @@ func (h *Handler) ViewUser(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) ViewUserById(c *gin.Context) {
+func (h *Handler) ViewAdminById(c *gin.Context) {
 	stringId := c.Param("id")
 	id, _ := strconv.Atoi(stringId)
-	res, err := h.Service.ViewUserById(c.Request.Context(), id)
+	res, err := h.Service.ViewAdminById(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -148,34 +144,16 @@ func (h *Handler) ViewUserById(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) RemoveUser(c *gin.Context) {
+func (h *Handler) RemoveAdmin(c *gin.Context) {
 	stringId := c.Param("id")
 	id, _ := strconv.Atoi(stringId)
 
-	err := h.Service.RemoveUser(c.Request.Context(), id)
+	err := h.Service.RemoveAdmin(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, "Successfully Remove User")
-}
-
-func (h *Handler) ChangeUser(c *gin.Context) {
-	var req UpdateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	stringId := c.Param("id")
-	id, _ := strconv.Atoi(stringId)
-
-	err := h.Service.ChangeUser(c.Request.Context(), &req, id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, "Successfully Change User")
+	c.JSON(http.StatusOK, "Successfully Remove Admin")
 }
 
 func (h *Handler) DisplayUserCount(c *gin.Context) {

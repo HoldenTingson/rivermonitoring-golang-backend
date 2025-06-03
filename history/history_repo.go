@@ -23,24 +23,82 @@ func NewRepository(db DBTX) Repository {
 }
 
 func (r *repository) GetHistoryByRiverIdByTime(ctx context.Context, id string) (*[]History, error) {
-	var histories []History
-	query := "SELECT id, height, status, DATE_FORMAT(timestamp, '%H:%i:%s') AS timestamp FROM history WHERE river_id = ? AND timestamp >= NOW() - INTERVAL 1 MINUTE ORDER BY timestamp ASC"
-	rows, err := r.db.QueryContext(ctx, query, id)
+	var allHistories []History
+	var result []History
+
+	// 1. Get the oldest timestamp available
+	var oldestTimestamp time.Time
+	var rawTimestamp []uint8
+
+	checkQuery := "SELECT MIN(timestamp) FROM history WHERE river_id = ?"
+	err := r.db.QueryRowContext(ctx, checkQuery, id).Scan(&rawTimestamp)
+	if err != nil && err != sql.ErrNoRows {
+		return &[]History{}, err
+	}
+
+	if len(rawTimestamp) > 0 {
+		parsedTime, parseErr := time.Parse("2006-01-02 15:04:05", string(rawTimestamp))
+		if parseErr != nil {
+			return &[]History{}, parseErr
+		}
+		oldestTimestamp = parsedTime
+	}
+
+	// 2. Define start time as the later of 1 minute ago or the oldest timestamp
+	now := time.Now()
+	oneMinuteAgo := now.Add(-1 * time.Minute)
+	var startTime time.Time
+	if oldestTimestamp.IsZero() || oldestTimestamp.Before(oneMinuteAgo) {
+		startTime = oneMinuteAgo
+	} else {
+		startTime = oldestTimestamp
+	}
+
+	nowFormatted := now.Format("2006-01-02 15:04:05")
+	startTimeFormatted := startTime.Format("2006-01-02 15:04:05")
+
+	// 3. Query all data between startTime and now
+	query := `
+		SELECT height, status, timestamp
+		FROM history
+		WHERE river_id = ?
+			AND timestamp BETWEEN ? AND ?
+		ORDER BY timestamp ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, id, startTimeFormatted, nowFormatted)
 	if err != nil {
 		return &[]History{}, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
-		var history History
-		err := rows.Scan(&history.Id, &history.Height, &history.Status, &history.Timestamp)
+		var h History
+
+		err := rows.Scan(&h.Height, &h.Status, &h.Timestamp)
 
 		if err != nil {
-			return &[]History{}, err
+			continue
+		}
+		allHistories = append(allHistories, h)
+	}
+
+	// 4. Filter with 5-second interval spacing
+	var lastIncludedTime time.Time
+	for _, h := range allHistories {
+		t, _ := time.Parse("2006-01-02 15:04:05", h.Timestamp)
+
+		if lastIncludedTime.IsZero() || t.Sub(lastIncludedTime) >= 5*time.Second {
+			result = append(result, h)
+			lastIncludedTime = t
 		}
 
-		histories = append(histories, history)
+		if len(result) >= 13 {
+			break
+		}
 	}
-	return &histories, nil
+
+	return &result, nil
 }
 
 func (r *repository) GetHistoryByRiverId(ctx context.Context, id string) (*[]History, error) {

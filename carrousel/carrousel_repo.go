@@ -38,7 +38,6 @@ func (r *repository) GetCarrousel(ctx context.Context) (*[]Carrousel, error) {
 			return &[]Carrousel{}, err
 		}
 
-		// Parse the date string into a time.Time value
 		new.Date, _ = util.FormatIndonesianDate(new.Date)
 
 		carrousel = append(carrousel, new)

@@ -8,14 +8,13 @@ import (
 )
 
 type Handler struct {
-	Service Service
+	Service
 }
 
 func NewHandler(service Service) *Handler {
 	return &Handler{
 		Service: service,
 	}
-
 }
 
 func (h *Handler) DisplayReportById(c *gin.Context) {

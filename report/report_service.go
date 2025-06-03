@@ -39,12 +39,12 @@ func (s *service) ViewReportById(ctx context.Context, id int) (*ReportResponse, 
 
 func (s *service) AddReport(ctx context.Context, req *CreateReportRequest) error {
 	r := &Report{
-		Title:   req.Title,
-		Content: req.Content,
-		UserId:  req.UserId,
-		Name:    req.Name,
-		Email:   req.Email,
-		Phone:   req.Phone,
+		Content:    req.Content,
+		Attachment: req.Attachment,
+		UserId:     req.UserId,
+		Name:       req.Name,
+		Email:      req.Email,
+		Phone:      req.Phone,
 	}
 
 	err := s.Repository.CreateReport(ctx, r)
