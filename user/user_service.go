@@ -198,7 +198,7 @@ func (s *service) SendEmail(ctx context.Context, email string) error {
 	address := host + ":" + port
 
 	subject := "Subject: Go Banjir Account Recovery\n"
-	body := "<body><a rel=\"nofollow noopener noreferrer\" target=\"_blank\" href=\"http://localhost:5173/createPassword?u=" + username + "&evpw=" + emailVerPassword + "\">Change Password</a></body>"
+	body := "<body><a rel=\"nofollow noopener noreferrer\" target=\"_blank\" href=\"https://gobanjirclient.netlify.app/createPassword?u=" + username + "&evpw=" + emailVerPassword + "\">Change Password</a></body>"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	message := []byte(subject + mime + body)
 	auth := smtp.PlainAuth("", from, password, host)
