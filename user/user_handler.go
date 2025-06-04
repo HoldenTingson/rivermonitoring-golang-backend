@@ -123,13 +123,14 @@ func (h *Handler) Logout(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "jwt",
 		Value:    "",
-		Path:     "",
+		Path:     "/",
 		MaxAge:   -1,
 		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
+		Domain:   "gobanjirclient.netlify.app",
 	})
-	c.JSON(http.StatusOK, gin.H{"message": "Logout Succesful"})
+	c.JSON(http.StatusOK, gin.H{"message": "Logout Successful"})
 }
 
 func (h *Handler) ChangePassword(c *gin.Context) {
