@@ -47,7 +47,15 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("jwt", u.accessToken, 86400, "/", "", true, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "jwt",
+		Value:    u.accessToken,
+		Path:     "/",
+		MaxAge:   86400,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	res := &LoginUserRes{
 		Username: u.Username,
