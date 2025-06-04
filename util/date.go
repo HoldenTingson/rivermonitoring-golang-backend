@@ -6,20 +6,18 @@ import (
 )
 
 func FormatIndonesianTimezone(date string) (string, error) {
-	layout := "2006-01-02 15:04:05"
-	parsedTime, err := time.Parse(layout, date)
+	parsedTime, err := time.Parse("2006-01-02 15:04:05", date)
 	if err != nil {
 		return "", err
 	}
 
-	location, err := time.LoadLocation("Asia/Jakarta")
+	loc, err := time.LoadLocation("Asia/Jakarta")
 	if err != nil {
 		return "", err
 	}
 
-	wibTime := parsedTime.In(location)
-
-	return wibTime.Format(layout), nil
+	indonesiaTime := parsedTime.In(loc)
+	return indonesiaTime.Format("2006-01-02 15:04:05"), nil
 }
 
 func FormatIndonesianDate(date string) (string, error) {
