@@ -132,8 +132,6 @@ func (s *service) ViewAdminById(ctx context.Context, id int) (*AdminResponse, er
 		return &AdminResponse{}, err
 	}
 
-	res.CreatedAt, _ = util.FormatIndonesianDate(res.CreatedAt)
-
 	admin := AdminResponse{
 		Id:        int64(res.Id),
 		Username:  res.Username,
