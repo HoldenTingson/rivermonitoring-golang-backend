@@ -5,7 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
+	"log"
 )
 
 type DBTX interface {
@@ -101,7 +101,7 @@ func (r *repository) GetAdminById(ctx context.Context, id int) (*Admin, error) {
 	}
 
 	admin.CreatedAt, _ = util.FormatIndonesianTimezone(admin.CreatedAt)
-	fmt.Println(admin.CreatedAt)
+	log.Println(admin.CreatedAt)
 
 	return &admin, nil
 }
