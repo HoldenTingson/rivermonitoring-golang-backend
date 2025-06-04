@@ -128,7 +128,6 @@ func (h *Handler) Logout(c *gin.Context) {
 		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
-		Domain:   "gobanjirclient.netlify.app",
 	})
 	c.JSON(http.StatusOK, gin.H{"message": "Logout Successful"})
 }

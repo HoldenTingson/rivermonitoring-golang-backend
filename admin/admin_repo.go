@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"BanjirEWS/util"
 	"context"
 	"database/sql"
 	"errors"
@@ -83,7 +82,6 @@ func (r *repository) GetAdmins(ctx context.Context) (*[]Admin, error) {
 		if err := rows.Scan(&admin.Id, &admin.Username, &admin.CreatedAt); err != nil {
 			return nil, err
 		}
-		admin.CreatedAt, _ = util.FormatIndonesianTimezone(admin.CreatedAt)
 		admins = append(admins, admin)
 	}
 
