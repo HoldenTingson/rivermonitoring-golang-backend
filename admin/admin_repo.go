@@ -99,8 +99,6 @@ func (r *repository) GetAdminById(ctx context.Context, id int) (*Admin, error) {
 		return &Admin{}, err
 	}
 
-	admin.CreatedAt, _ = util.FormatIndonesianTimezone(admin.CreatedAt)
-
 	return &admin, nil
 }
 
