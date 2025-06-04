@@ -47,7 +47,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("jwt", u.accessToken, 3600, "/", "gobanjirclient.netlify.app", true, true)
+	c.SetCookie("jwt", u.accessToken, 86400, "/", "", true, true)
 
 	res := &LoginUserRes{
 		Username: u.Username,
