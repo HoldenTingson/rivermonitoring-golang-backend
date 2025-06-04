@@ -19,6 +19,8 @@ var r *gin.Engine
 func Init(riverHandler *river.Handler, userHandler *user.Handler, newsHandler *news.Handler, reportHandler *report.Handler, galleryHandler *gallery.Handler, historyHandler *history.Handler, adminHandler *admin.Handler, carroueslHandler *carrousel.Handler) {
 	r = gin.Default()
 
+	r.Static("/uploads", "./uploads")
+
 	config := cors.Config{
 		AllowOrigins: []string{"http://localhost:5173", "http://localhost:3000", "https://gobanjiradmin.netlify.app", "https://gobanjirclient.netlify.app"},
 		AllowOriginFunc: func(origin string) bool {
