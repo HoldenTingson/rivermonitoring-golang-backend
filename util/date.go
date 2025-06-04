@@ -5,6 +5,23 @@ import (
 	"time"
 )
 
+func FormatIndonesianTimezone(date string) (string, error) {
+	layout := "2006-01-02 15:04:05"
+	parsedTime, err := time.Parse(layout, date)
+	if err != nil {
+		return "", err
+	}
+
+	location, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		return "", err
+	}
+
+	wibTime := parsedTime.In(location)
+
+	return wibTime.Format(layout), nil
+}
+
 func FormatIndonesianDate(date string) (string, error) {
 	monthMap := map[string]string{
 		"January":   "Januari",

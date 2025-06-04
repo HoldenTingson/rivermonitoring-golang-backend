@@ -1,6 +1,7 @@
 package history
 
 import (
+	"BanjirEWS/util"
 	"context"
 	"database/sql"
 	"errors"
@@ -26,7 +27,6 @@ func (r *repository) GetHistoryByRiverIdByTime(ctx context.Context, id string) (
 	var allHistories []History
 	var result []History
 
-	// 1. Get the oldest timestamp available
 	var oldestTimestamp time.Time
 	var rawTimestamp []uint8
 
@@ -44,7 +44,6 @@ func (r *repository) GetHistoryByRiverIdByTime(ctx context.Context, id string) (
 		oldestTimestamp = parsedTime
 	}
 
-	// 2. Define start time as the later of 1 minute ago or the oldest timestamp
 	now := time.Now()
 	oneMinuteAgo := now.Add(-1 * time.Minute)
 	var startTime time.Time
@@ -57,7 +56,6 @@ func (r *repository) GetHistoryByRiverIdByTime(ctx context.Context, id string) (
 	nowFormatted := now.Format("2006-01-02 15:04:05")
 	startTimeFormatted := startTime.Format("2006-01-02 15:04:05")
 
-	// 3. Query all data between startTime and now
 	query := `
 		SELECT height, status, timestamp
 		FROM history
@@ -80,10 +78,11 @@ func (r *repository) GetHistoryByRiverIdByTime(ctx context.Context, id string) (
 		if err != nil {
 			continue
 		}
+
+		h.Timestamp, _ = util.FormatIndonesianTimezone(h.Timestamp)
 		allHistories = append(allHistories, h)
 	}
 
-	// 4. Filter with 5-second interval spacing
 	var lastIncludedTime time.Time
 	for _, h := range allHistories {
 		t, _ := time.Parse("2006-01-02 15:04:05", h.Timestamp)

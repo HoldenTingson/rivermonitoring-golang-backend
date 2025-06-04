@@ -1,6 +1,7 @@
 package user
 
 import (
+	"BanjirEWS/util"
 	"context"
 	"database/sql"
 	"errors"
@@ -283,6 +284,9 @@ func (r *repository) GetUsers(ctx context.Context) (*[]User, error) {
 			return nil, err
 		}
 
+		user.CreatedAt, _ = util.FormatIndonesianTimezone(user.CreatedAt)
+		user.ChangedAt, _ = util.FormatIndonesianTimezone(user.ChangedAt)
+
 		users = append(users, user)
 	}
 
@@ -296,6 +300,9 @@ func (r *repository) GetUserById(ctx context.Context, id int) (*User, error) {
 	if err != nil {
 		return &User{}, err
 	}
+
+	user.CreatedAt, _ = util.FormatIndonesianTimezone(user.CreatedAt)
+	user.ChangedAt, _ = util.FormatIndonesianTimezone(user.ChangedAt)
 
 	return &user, nil
 }
