@@ -120,7 +120,15 @@ func (h *Handler) ChangeProfile(c *gin.Context) {
 }
 
 func (h *Handler) Logout(c *gin.Context) {
-	c.SetCookie("jwt", "", -1, "", "", false, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Path:     "",
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
 	c.JSON(http.StatusOK, gin.H{"message": "Logout Succesful"})
 }
 
