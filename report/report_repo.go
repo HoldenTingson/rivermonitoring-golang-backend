@@ -1,7 +1,6 @@
 package report
 
 import (
-	"BanjirEWS/util"
 	"context"
 	"database/sql"
 	"errors"
@@ -52,8 +51,6 @@ func (r *repository) GetReportById(ctx context.Context, id int) (*ReportResponse
 	if err != nil {
 		return &ReportResponse{}, err
 	}
-
-	report.CreatedAt, _ = util.FormatIndonesianTimezone(report.CreatedAt)
 
 	return &report, nil
 }
@@ -109,7 +106,7 @@ func (r *repository) GetReports(ctx context.Context) (*[]ReportResponse, error) 
 		if err != nil {
 			return &[]ReportResponse{}, err
 		}
-		report.CreatedAt, _ = util.FormatIndonesianTimezone(report.CreatedAt)
+
 		reports = append(reports, report)
 	}
 

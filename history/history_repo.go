@@ -79,7 +79,6 @@ func (r *repository) GetHistoryByRiverIdByTime(ctx context.Context, id string) (
 			continue
 		}
 
-		h.Timestamp, _ = util.FormatIndonesianTimezone(h.Timestamp)
 		allHistories = append(allHistories, h)
 	}
 
@@ -115,6 +114,7 @@ func (r *repository) GetHistoryByRiverId(ctx context.Context, id string) (*[]His
 		if err != nil {
 			return &[]History{}, err
 		}
+		history.Timestamp, _ = util.FormatIndonesianTimezone(history.Timestamp)
 
 		histories = append(histories, history)
 	}
