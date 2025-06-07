@@ -1,6 +1,7 @@
 package history
 
 import (
+	"BanjirEWS/util"
 	"context"
 	"database/sql"
 	"errors"
@@ -78,6 +79,8 @@ func (r *repository) GetHistoryByRiverIdByTime(ctx context.Context, id string) (
 			continue
 		}
 
+		h.Timestamp, _ = util.FormatIndonesianTimezone(h.Timestamp)
+
 		allHistories = append(allHistories, h)
 	}
 
@@ -114,6 +117,8 @@ func (r *repository) GetHistoryByRiverId(ctx context.Context, id string) (*[]His
 			return &[]History{}, err
 		}
 
+		history.Timestamp, _ = util.FormatIndonesianTimezone(history.Timestamp)
+
 		histories = append(histories, history)
 	}
 	return &histories, nil
@@ -127,6 +132,8 @@ func (r *repository) GetHistoryById(ctx context.Context, id int) (*History, erro
 	if err != nil {
 		return &History{}, err
 	}
+
+	histories.Timestamp, _ = util.FormatIndonesianTimezone(histories.Timestamp)
 	return &histories, nil
 }
 
