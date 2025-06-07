@@ -8,13 +8,11 @@ import (
 func FormatIndonesianTimezone(date string) (string, error) {
 	parsedTime, err := time.Parse("2006-01-02 15:04:05", date)
 	if err != nil {
-		return "kena error pertama", err
+		return "", err
 	}
 
-	loc, err := time.LoadLocation("Asia/Jakarta")
-	if err != nil {
-		return "kena error kedua", err
-	}
+	jakartaOffset := 7 * 60 * 60
+	loc := time.FixedZone("WIB", jakartaOffset)
 
 	indonesiaTime := parsedTime.In(loc)
 	return indonesiaTime.Format("2006-01-02 15:04:05"), nil
