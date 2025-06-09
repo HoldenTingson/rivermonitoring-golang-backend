@@ -32,9 +32,9 @@ func (s *service) UpdateRiver(ctx context.Context, id string, dataChan chan *Upd
 				return
 			case update := <-dataChan:
 
-				if update.Height < 1.5 {
+				if update.Height < 5 {
 					update.Status = "Aman"
-				} else if update.Height < 3 {
+				} else if update.Height < 10 {
 					update.Status = "Siaga"
 				} else {
 					update.Status = "Bahaya"
